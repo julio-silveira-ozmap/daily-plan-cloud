@@ -39,10 +39,22 @@ Antes de qualquer coisa, liste as tools MCP conectadas a esta sessão (Jira/
 Atlassian, Google Calendar, GitHub). O que não estiver disponível vira nota
 explícita no resumo, não suposição silenciosa.
 
-### 2. Ler o state antes de coletar
+### 2. Sincronizar o state antes de coletar
 
-Ler `state/STATE.md` (neste repo) — decisões vigentes e bloqueios ativos do
-dia anterior entram no plano de hoje sem redescobrir.
+O progresso real evolui na branch `claude/daily-plan-state`, não na `main`
+(rotinas cloud só têm permissão de push em branches com prefixo `claude/` —
+ver seção "Persistência" no README deste repo). Antes de ler:
+
+```bash
+git fetch origin claude/daily-plan-state 2>/dev/null && \
+  git checkout origin/claude/daily-plan-state -- state/
+```
+
+Se esse comando falhar (branch ainda não existe — primeira execução), seguir
+com o `state/` da `main` como ponto de partida — ele já vira o estado inicial
+na primeira vez que a branch `claude/daily-plan-state` for criada no passo 6.
+Ler `state/STATE.md`: decisões vigentes e bloqueios ativos do dia anterior
+entram no plano de hoje sem redescobrir.
 
 ### 3. Coletar dados
 
@@ -81,5 +93,13 @@ pra agir sobre estes itens."
 2. Atualizar `state/STATE.md` só com decisões/bloqueios que ainda valem.
 3. Se `state/daily/` tiver arquivos com mais de ~30 dias sem consolidar,
    gerar `state/archive/YYYY-MM.md` e remover os dailies daquele mês.
-4. `git add -A && git commit -m "daily-plan: resumo de <hoje>" && git push`.
-   Reportar erro claramente se o push falhar.
+4. Commitar e dar push **na branch `claude/daily-plan-state`**, nunca em
+   `main`:
+   ```bash
+   git add state/ && \
+   git commit -m "daily-plan: resumo de <hoje>" && \
+   git push origin HEAD:claude/daily-plan-state
+   ```
+   Isso cria a branch remotamente na primeira execução e só a atualiza nas
+   seguintes — sem tocar em `main`. Reportar erro claramente se o push
+   falhar (não tentar contornar sozinha, ex. forçando push em `main`).

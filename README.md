@@ -46,3 +46,21 @@ state/archive/YYYY-MM.md                    # rollup mensal (mesma regra da vers
 
 Mesmas regras de manutenção de `~/.claude/daily-plan-state/README.md`
 (promoção seletiva, poda de dailies com +30 dias).
+
+## Persistência: por que `state/` na `main` não é a fonte da verdade
+
+Rotinas cloud só têm permissão de push em branches com prefixo `claude/` —
+push direto em `main` dá 403 ("Resource not accessible by integration"),
+mesmo com o repo público e os connectors certos anexados (testado e
+confirmado em 2026-08-19). Em vez de pedir pra habilitar "Allow unrestricted
+branch pushes" nas configs do ambiente, a skill trabalha assim:
+
+- O `state/` versionado na `main` é só o **template inicial**.
+- O progresso real acumula na branch **`claude/daily-plan-state`**, que a
+  skill cria/atualiza sozinha a cada execução (`git push origin
+  HEAD:claude/daily-plan-state`).
+- No início de cada execução, a skill sincroniza `state/` a partir dessa
+  branch antes de ler/escrever (ver passo 2 do `SKILL.md`).
+
+Se algum dia quiser consolidar isso de volta pra `main`, é um merge normal
+de `claude/daily-plan-state` → `main`, feito manualmente por você.
